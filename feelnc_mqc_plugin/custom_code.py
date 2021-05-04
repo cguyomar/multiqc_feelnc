@@ -15,8 +15,7 @@ from multiqc.utils import report, util_functions, config
 log = logging.getLogger('multiqc')
 
 # Save this plugin's version number (defined in setup.py) to the MultiQC config
-config.feelnc_mqc_plugin = get_distribution("feelnc_mqc_plugin").version
-
+config.feelnc_mqc_plugin_version = get_distribution("feelnc_mqc_plugin").version
 
 # Add default config options for the things that are used in MultiQC_NGI
 def feelnc_mqc_plugin_execution_start():
@@ -27,11 +26,7 @@ def feelnc_mqc_plugin_execution_start():
     to use custom command line flags.
     """
 
-    # Halt execution if we've disabled the plugin
-    if config.kwargs.get('disable', True):
-        return None
-
-    log.info("Running feelnc Plugin v{}".format(config.feelnc_mqc_plugin_version))
+    log.info("Running feelnc plugin v{}".format(config.feelnc_mqc_plugin_version))
 
     # Add to the main MultiQC config object.
     # User config files have already been loaded at this point
