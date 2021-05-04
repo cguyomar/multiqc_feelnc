@@ -49,11 +49,13 @@ class MultiqcModule(BaseMultiqcModule):
             plot = table.plot(self.feelnc_transcripts_counts,{},config)
         )
 
-        self.add_section(
-            name = 'ROC curve',
-            anchor = 'feelnc_roc',
-            content = self.feelnc_roc_curves['exons_RF_TGROC']
-        )
+        if 'exons_RF_TGROC' in self.feelnc_roc_curves.keys():
+
+            self.add_section(
+                name = 'ROC curve',
+                anchor = 'feelnc_roc',
+                content = self.feelnc_roc_curves['exons_RF_TGROC']
+            )
 
         table_config = {
             'namespace': '',                         # Name for grouping. Prepends desc and is in Config Columns modal
