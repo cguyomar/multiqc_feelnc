@@ -31,15 +31,15 @@ class MultiqcModule(BaseMultiqcModule):
            self.feelnc_roc_curves[f['s_name']] = self.parse_roc(f)
 
         for f in self.find_log_files("feelnc/lnc_classes_log", filehandles=False):
-            self.feelnc_classifier_stats[f["s_name"]] = self.parse_log(f)
+            self.feelnc_classifier_stats["Novel lnc transcripts identified by FEELnc"] = self.parse_log(f)
 
         for f in self.find_log_files("feelnc/lnc_classes", filehandles=True):
-            self.feelnc_classes_data[f["s_name"]]= self.parse_classes(f)
-            self.feelnc_classes_counts_all[f["s_name"]],self.feelnc_classes_counts_sense[f["s_name"]],self.feelnc_classes_counts_antisense[f["s_name"]] = self.count_classes(f)
+            self.feelnc_classes_data["lncRNA class"]= self.parse_classes(f)
+            self.feelnc_classes_counts_all["lncRNA class"],self.feelnc_classes_counts_sense["lncRNA class"],self.feelnc_classes_counts_antisense[f["s_name"]] = self.count_classes(f)
         log.info(self.feelnc_classes_counts_all)
 
         for f in self.find_log_files("feelnc/rf_summary", filehandles=False):
-            self.feelnc_transcripts_counts[f["s_name"]] = self.parse_log(f)
+            self.feelnc_transcripts_counts["Novel transcripts evaluated by FEELnc"] = self.parse_log(f)
 
         # Make report
         config = {'col1_header': 'FeelNC run'}
