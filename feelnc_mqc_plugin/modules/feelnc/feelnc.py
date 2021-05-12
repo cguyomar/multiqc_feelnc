@@ -14,9 +14,9 @@ log = logging.getLogger(__name__)
 class MultiqcModule(BaseMultiqcModule):
     def __init__(self):
         # Initialise the parent object
-        super(MultiqcModule, self).__init__(name='FeelNC', anchor='feelnc',
+        super(MultiqcModule, self).__init__(name='FEELnc', anchor='feelnc',
         href="https://github.com/tderrien/FEELnc",
-        info="FEELnc allows to annotate long non coding RNAs (lncRNAs) based on reconstructed transcripts from RNA-seq data ")
+        info="results for the transcripts of the novel annotation. FEELnc is a classifier that identifies and characterizes long non coding RNAs in a set of annotated transcripts.")
 
         self.feelnc_roc_curves = dict()
         self.feelnc_classes_data = dict()
@@ -42,7 +42,7 @@ class MultiqcModule(BaseMultiqcModule):
             self.feelnc_transcripts_counts["Novel transcripts evaluated by FEELnc"] = self.parse_log(f)
 
         # Make report
-        config = {'col1_header': 'FeelNC run'}
+        config = {'col1_header': ' '}
         self.add_section(
             name = 'Coding potential prediction',
             description = 'Coding potential among transcripts filtered by feelnc_filter',
@@ -64,14 +64,13 @@ class MultiqcModule(BaseMultiqcModule):
             'save_file': False,                      # Whether to save the table data to a file
             'sortRows': True,                         # Whether to sort rows alphabetically
             'only_defined_headers': True,             # Only show columns that are defined in the headers config
-            'col1_header': 'FeelNC run'     ,        # The header used for the first column
+            'col1_header': 'FEELnc run'     ,        # The header used for the first column
             'no_beeswarm': False    # Force a table to always be plotted (beeswarm by default if many rows)
         }
 
         self.add_section(
             name = 'lncRNA classification summary',
             anchor = 'feelnc_classification',
-#            plot = table.plot(self.feelnc_classes_counts['lncRNA_classes'])
             plot = table.plot(self.feelnc_classifier_stats,{},config),
         )
         cats = OrderedDict()
@@ -92,7 +91,7 @@ class MultiqcModule(BaseMultiqcModule):
         config = {"data_labels": [{'name': 'All'}, {'name': 'Sense'}, {'name': 'Antisense'}]}
         self.add_section(
             name = 'lncRNA classes',
-            description = "Distribution of lncRNA classes, only for bestHits",
+            description = "Distribution of lncRNA classes, only interactions with the closest transcript (bestHits) are counted",
             anchor = 'feelnc_classes',
             plot = bargraph.plot([self.feelnc_classes_counts_all,self.feelnc_classes_counts_sense,self.feelnc_classes_counts_antisense],[cats,cats,cats],config)
         )
@@ -172,7 +171,6 @@ class MultiqcModule(BaseMultiqcModule):
         new_keys = list(range(len(subclasses_counts.keys())))
         subclasses_counts_renamed = dict(zip(new_keys,list(subclasses_counts.values())))
         log.info(classes_counts)
-        #return({"all":classes_counts,"sense":classes_counts_sense,"antisense":classes_counts_antisense})
         return([classes_counts,classes_counts_sense,classes_counts_antisense])
 
 
