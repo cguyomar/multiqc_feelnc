@@ -75,16 +75,16 @@ class MultiqcModule(BaseMultiqcModule):
             plot = table.plot(self.feelnc_classifier_stats,{},config),
         )
         cats = OrderedDict()
-        cats['genic - exonic'] = {
+        cats['Genic - Exonic'] = {
             'color': '#b2d1ff'
         }
-        cats['genic - intronic'] = {
+        cats['Genic - Intronic'] = {
             'color': '#2660c1'
         }
-        cats['intergenic - downstream'] = {
+        cats['Intergenic - Downstream'] = {
             'color': '#b32a2a'
         }
-        cats['intergenic - upstream'] = {
+        cats['Intergenic - Upstream'] = {
             'color': '#fe6e62'
         }
 
@@ -149,24 +149,24 @@ class MultiqcModule(BaseMultiqcModule):
 
     def count_classes(self,f):
         #classes_counts = {'nb_lincrna':0,'nb_antisense':0,'nb_sense_intronic':0,'nb_sense_exonic':0}
-        classes_counts = {'genic - exonic':0,'genic - intronic':0,'intergenic - upstream':0,'intergenic - downstream':0}
-        classes_counts_sense = {'genic - exonic':0,'genic - intronic':0,'intergenic - upstream':0,'intergenic - downstream':0}
-        classes_counts_antisense = {'genic - exonic':0,'genic - intronic':0,'intergenic - upstream':0,'intergenic - downstream':0}
+        classes_counts = {'Genic - Exonic':0,'Genic - Intronic':0,'Intergenic - Upstream':0,'Intergenic - Downstream':0}
+        classes_counts_sense = {'Genic - Exonic':0,'Genic - Intronic':0,'Intergenic - Upstream':0,'Intergenic - Downstream':0}
+        classes_counts_antisense = {'Genic - Exonic':0,'Genic - Intronic':0,'Intergenic - Upstream':0,'Intergenic - Downstream':0}
         subclasses_counts = OrderedDict()
         subclasses = []
 
-        for r in self.feelnc_classes_data[f["s_name"]].values():
+        for r in self.feelnc_classes_data["lncRNA class"].values():
             if r["isBest"]:
                 subclass = r["type"] + ' ' + r["direction"] + ' ' + r["subtype"] + ' ' + r["location"]
                 if subclass in subclasses_counts.keys():
                     subclasses_counts[subclass]['count'] += 1
                 else:
                     subclasses_counts[subclass] = {'direction': r["direction"], 'type': r["type"], 'subtype': r["subtype"], 'location': r["location"], 'count': 0}
-                classes_counts[r["type"] + " - " + r["location"]]+=1
+                classes_counts[r["type"].title() + " - " + r["location"].title()]+=1
                 if r["direction"]=="sense":
-                    classes_counts_sense[r["type"] + " - " + r["location"]]+=1
+                    classes_counts_sense[r["type"].title() + " - " + r["location"].title()]+=1
                 else:
-                    classes_counts_antisense[r["type"] + " - " + r["location"]]+=1
+                    classes_counts_antisense[r["type"].title() + " - " + r["location"].title()]+=1
 
         # Rename dict keys for readability
         new_keys = list(range(len(subclasses_counts.keys())))
