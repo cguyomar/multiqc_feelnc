@@ -33,7 +33,7 @@ def feelnc_mqc_plugin_execution_start():
     #   so we check whether the value is already set. This is to avoid
     #   clobbering values that have been customised by users.
 
-    config.ignore_images="false"
+    # config.ignore_images="false"
 
     if 'feelnc/rf_summary' not in config.sp:
         config.update_dict( config.sp, { 'feelnc/rf_summary': { 'fn': '*RF_summary.txt' } } )
