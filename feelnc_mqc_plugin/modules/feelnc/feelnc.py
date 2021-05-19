@@ -14,65 +14,57 @@ log = logging.getLogger(__name__)
 class MultiqcModule(BaseMultiqcModule):
     def __init__(self):
         # Initialise the parent object
-        super(MultiqcModule, self).__init__(name='FEELnc', anchor='feelnc',
+        super(MultiqcModule, self).__init__(name='Detection of long non coding transcripts (FEELnc)', anchor='feelnc',
         href="https://github.com/tderrien/FEELnc",
         info="results for the transcripts of the novel annotation. FEELnc is a classifier that identifies and characterizes long non coding RNAs in a set of annotated transcripts.")
 
-        self.feelnc_roc_curves = dict()
+        target="FEELnc"
+        self.mnameshort = '<a href="{}" target="_blank">{}</a>'.format(self.href, target)
+        self.intro = "<p>{} {}</p>{}".format(self.mnameshort, self.info, self.extra)
+
         self.feelnc_classes_data = dict()
         self.feelnc_classes_counts_all = dict()
         self.feelnc_classes_counts_sense = dict()
         self.feelnc_classes_counts_antisense = dict()
-        self.feelnc_classifier_stats = dict()
-        self.feelnc_transcripts_counts = OrderedDict()
+        self.feelnc_roc_curves = dict()
+        self.feelnc_classification_summary = dict()
 
         # Parse logs
         for f in self.find_log_files("feelnc/roc", filehandles=True):
            self.feelnc_roc_curves[f['s_name']] = self.parse_roc(f)
-
-        for f in self.find_log_files("feelnc/lnc_classes_log", filehandles=False):
-            self.feelnc_classifier_stats["Novel lnc transcripts identified by FEELnc"] = self.parse_log(f)
 
         for f in self.find_log_files("feelnc/lnc_classes", filehandles=True):
             self.feelnc_classes_data["lncRNA class"]= self.parse_classes(f)
             self.feelnc_classes_counts_all["lncRNA class"],self.feelnc_classes_counts_sense["lncRNA class"],self.feelnc_classes_counts_antisense[f["s_name"]] = self.count_classes(f)
         log.info(self.feelnc_classes_counts_all)
 
-        for f in self.find_log_files("feelnc/rf_summary", filehandles=False):
-            self.feelnc_transcripts_counts["Novel transcripts evaluated by FEELnc"] = self.parse_log(f)
+
+        for f in self.find_log_files("feelnc/classification_summary", filehandles=False):
+            self.feelnc_classification_summary["Transcripts of the novel annotation"] = self.parse_asis(f)
 
         # Make report
-        config = {'col1_header': ' '}
+        config = {'id':'classification_summary',
+        'title':'Summary of FEELnc classification'
+        }
+        config_table = {"id": "feelnc_classification", "namespace": "feelnc","sortRows": False,"title": "Classification of transcripts by FEELnc"}
+        config = {"id": "feelnc_classification", "namespace": "feelnc","sortRows": False}
         self.add_section(
-            name = 'Coding potential prediction',
-            description = 'Coding potential among transcripts filtered by feelnc_filter',
-            plot = table.plot(self.feelnc_transcripts_counts,{},config)
+            name = 'Transcript classification',
+            description = "For all potential lnc transcripts (excluding known coding and short transcripts), FEELnc uses a random forest classifier to determine the coding potential of transcripts",
+            anchor = 'feelnc_classification',
+            plot =  bargraph.plot(self.feelnc_classification_summary,pconfig=config_table)
         )
 
         if 'exons_RF_TGROC' in self.feelnc_roc_curves.keys():
 
             self.add_section(
                 name = 'ROC curve',
+                description = "ROC curve of the FEELnc classifier",
                 anchor = 'feelnc_roc',
                 content = self.feelnc_roc_curves['exons_RF_TGROC']
             )
 
-        table_config = {
-            'namespace': '',                         # Name for grouping. Prepends desc and is in Config Columns modal
-            'id': '<random string>',                 # ID used for the table
-            'table_title': '<table id>',             # Title of the table. Used in the column config modal
-            'save_file': False,                      # Whether to save the table data to a file
-            'sortRows': True,                         # Whether to sort rows alphabetically
-            'only_defined_headers': True,             # Only show columns that are defined in the headers config
-            'col1_header': 'FEELnc run'     ,        # The header used for the first column
-            'no_beeswarm': False    # Force a table to always be plotted (beeswarm by default if many rows)
-        }
 
-        self.add_section(
-            name = 'lncRNA classification summary',
-            anchor = 'feelnc_classification',
-            plot = table.plot(self.feelnc_classifier_stats,{},config),
-        )
         cats = OrderedDict()
         cats['Genic - Exonic'] = {
             'color': '#b2d1ff'
@@ -86,22 +78,24 @@ class MultiqcModule(BaseMultiqcModule):
         cats['Intergenic - Upstream'] = {
             'color': '#fe6e62'
         }
-
-        config_table = {"id": "feelnc_classes_table", "namespace": "feelnc","sortRows": False}
         config = {"data_labels": [{'name': 'All'}, {'name': 'Sense'}, {'name': 'Antisense'}]}
+
         self.add_section(
-            name = 'lncRNA classes',
-            description = "Distribution of lncRNA classes, only interactions with the closest transcript (bestHits) are counted",
-            anchor = 'feelnc_classes',
-            plot = bargraph.plot([self.feelnc_classes_counts_all,self.feelnc_classes_counts_sense,self.feelnc_classes_counts_antisense],[cats,cats,cats],config)
+            name = 'LncRNA position with respect to the closest mRNA',
+            description = "The relative position of each lncRNA transcript is assessed with respect to the closest coding transcript. Coding transcripts are either transcripts from the reference whose 'transcript biotype' is 'protein_coding' or transcripts evaluated as 'mRNA' by FEELnc",
+            anchor = 'feelnc_classification',
+            plot = bargraph.plot([self.feelnc_classes_counts_all,self.feelnc_classes_counts_sense,self.feelnc_classes_counts_antisense],[cats,cats,cats],config),
         )
 
-        # Whole classes table
-        # self.add_section(
-        #     name = 'LNC classes',
-        #     anchor = 'feelnc_classes',
-        #     plot = table.plot(self.feelnc_classes_data["lncRNA_classes"])
-        # )
+    def parse_asis(self,f):
+        parsed_data = {}
+        raw_data = f['f']
+        raw_data = raw_data.split("\n")
+        for l in raw_data:
+            l = l.split("\t")
+            if len(l)>=2:
+                parsed_data[l[0]]=l[1]
+        return(parsed_data)
 
     def parse_log(self,f):
         regexes = {
@@ -148,11 +142,11 @@ class MultiqcModule(BaseMultiqcModule):
 
     def count_classes(self,f):
         #classes_counts = {'nb_lincrna':0,'nb_antisense':0,'nb_sense_intronic':0,'nb_sense_exonic':0}
-        classes_counts = {'Genic - Exonic':0,'Genic - Intronic':0,'Intergenic - Upstream':0,'Intergenic - Downstream':0}
-        classes_counts_sense = {'Genic - Exonic':0,'Genic - Intronic':0,'Intergenic - Upstream':0,'Intergenic - Downstream':0}
-        classes_counts_antisense = {'Genic - Exonic':0,'Genic - Intronic':0,'Intergenic - Upstream':0,'Intergenic - Downstream':0}
+        template = {'Genic - Exonic':0,'Genic - Intronic':0,'Intergenic - Upstream':0,'Intergenic - Downstream':0}
+        classes_counts = dict(template)
+        classes_counts_sense = dict(template)
+        classes_counts_antisense = dict(template)
         subclasses_counts = OrderedDict()
-        subclasses = []
 
         for r in self.feelnc_classes_data["lncRNA class"].values():
             if r["isBest"]:
@@ -172,10 +166,3 @@ class MultiqcModule(BaseMultiqcModule):
         subclasses_counts_renamed = dict(zip(new_keys,list(subclasses_counts.values())))
         log.info(classes_counts)
         return([classes_counts,classes_counts_sense,classes_counts_antisense])
-
-
-    # def parse_gtf(self,f):
-    #     for l in f['f']:
-    #         row = l.split("\t")
-    #         if row[0]==1
-    #

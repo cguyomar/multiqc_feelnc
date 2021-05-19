@@ -43,6 +43,8 @@ def feelnc_mqc_plugin_execution_start():
         config.update_dict( config.sp, { 'feelnc/roc': { 'fn': '*_TGROC.png' } } )
     if 'feelnc/lnc_classes_log' not in config.sp:
         config.update_dict( config.sp, { 'feelnc/lnc_classes_log': { 'fn': '*feelncclassifier.log' } } )
+    if 'feelnc/classification_summary' not in config.sp:
+        config.update_dict( config.sp, { 'feelnc/classification_summary': { 'fn': 'feelnc_classification_summary.txt' } } )
 
     # # Some additional filename cleaning
     # config.fn_clean_exts.extend([
