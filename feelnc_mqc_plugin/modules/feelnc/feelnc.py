@@ -6,9 +6,6 @@ from copy import deepcopy
 from collections import OrderedDict
 import re
 
-
-
-
 log = logging.getLogger(__name__)
 
 class MultiqcModule(BaseMultiqcModule):
@@ -53,17 +50,16 @@ class MultiqcModule(BaseMultiqcModule):
         for val in ["monoexonic","biexonic","Size"]:
             if val in filter_counts.keys():
                 classification_counts["Not evaluated by FEELnc (other reason)"] += filter_counts[val]
+
+        # Parse ROC curve
         for f in self.find_log_files("feelnc/roc", filehandles=True):
            self.feelnc_roc_curves[f['s_name']] = self.parse_roc(f)
 
+        # Parse interactions classes
         for f in self.find_log_files("feelnc/lnc_classes", filehandles=True):
             self.feelnc_classes_data["lncRNA class"]= self.parse_classes(f)
             self.feelnc_classes_counts_all["lncRNA class"],self.feelnc_classes_counts_sense["lncRNA class"],self.feelnc_classes_counts_antisense[f["s_name"]] = self.count_classes(f)
-        log.info(self.feelnc_classes_counts_all)
-
-
-        for f in self.find_log_files("feelnc/classification_summary", filehandles=False):
-            self.feelnc_classification_summary["Transcripts of the novel annotation"] = self.parse_asis(f)
+            break
 
         # Make report
         config = {'id':'classification_summary',
@@ -79,14 +75,12 @@ class MultiqcModule(BaseMultiqcModule):
         )
 
         if 'exons_RF_TGROC' in self.feelnc_roc_curves.keys():
-
             self.add_section(
                 name = 'ROC curve',
                 description = "ROC curve of the FEELnc classifier",
                 anchor = 'feelnc_roc',
                 content = self.feelnc_roc_curves['exons_RF_TGROC']
             )
-
 
         cats = OrderedDict()
         cats['Genic - Exonic'] = {
@@ -105,7 +99,11 @@ class MultiqcModule(BaseMultiqcModule):
 
         self.add_section(
             name = 'LncRNA position with respect to the closest mRNA',
-            description = "The relative position of each lncRNA transcript is assessed with respect to the closest coding transcript. Coding transcripts are either transcripts from the reference whose 'transcript biotype' is 'protein_coding' or transcripts evaluated as 'mRNA' by FEELnc",
+            description = "The relative position of each lncRNA transcript is \
+            assessed with respect to the closest coding transcript. \
+            Coding transcripts are either transcripts from the reference whose\
+            'transcript biotype' is 'protein_coding' or transcripts evaluated as \
+            'mRNA' by FEELnc",
             anchor = 'feelnc_classification',
             plot = bargraph.plot([self.feelnc_classes_counts_all,self.feelnc_classes_counts_sense,self.feelnc_classes_counts_antisense],[cats,cats,cats],config),
         )
@@ -127,32 +125,12 @@ class MultiqcModule(BaseMultiqcModule):
         raw_data = raw_data.split("\n")
         for l in raw_data:
             l = l.split("\t")
-            if len(l)>=2:
-                parsed_data[l[0]]=l[1]
-        return(parsed_data)
-
-    def parse_log(self,f):
-        regexes = {
-            "Number of lncRNAs": r"#Number of lncRNA : (\d+)",
-            "Number of mRNAs": r"#Number of mRNA : (\d+)",
-            "Number of interactions": r"#Number of interaction : (\d+)",
-            "Number of lncRNAs without interaction": r"#Number of lncRNA without interaction : (\d+)",
-            "Number of lncRNA transcripts": r"-Nb_lncRNAs:\t(\d+)",
-            "Number of mRNA transcripts": r"-Nb_mRNAs:\t(\d+)",
-        }
-
-        raw_data = f['f']
-        parsed_data = {}
-        for k, r in regexes.items():
-            r_search = re.search(r, raw_data, re.MULTILINE)
-            if r_search:
-                parsed_data[k] = float(r_search.group(1))
-        log.info(parsed_data)
+            if len(l) >= 2:
+                parsed_data[l[0]] = l[1]
         return(parsed_data)
 
     def parse_roc(self,f):
-        img_html = ('<div class="mqc-custom-content-image"><img src="{}" /></div>'.format(f['fn']))
-        return(img_html)
+        '<div class="mqc-custom-content-image"><img src="{}" /></div>'.format(f['fn'])
 
     def parse_classes(self,f):
         data = {}
@@ -165,18 +143,19 @@ class MultiqcModule(BaseMultiqcModule):
                 log.info(col_names)
             else:
                 row = dict(zip(col_names,l.split("\t")))
-                row = { k:v.strip() for k, v in row.items()}
+                row = {k:v.strip() for k, v in row.items()}
                 row["isBest"] = bool(int(row["isBest"]))
                 row["distance"] = int(row["distance"])
 
                 data[str(line_number)] = row
                 line_number += 1
-
         return(data)
 
     def count_classes(self,f):
-        #classes_counts = {'nb_lincrna':0,'nb_antisense':0,'nb_sense_intronic':0,'nb_sense_exonic':0}
-        template = {'Genic - Exonic':0,'Genic - Intronic':0,'Intergenic - Upstream':0,'Intergenic - Downstream':0}
+        template = {'Genic - Exonic':0,
+                    'Genic - Intronic':0,
+                    'Intergenic - Upstream':0,
+                    'Intergenic - Downstream':0}
         classes_counts = dict(template)
         classes_counts_sense = dict(template)
         classes_counts_antisense = dict(template)
@@ -184,11 +163,15 @@ class MultiqcModule(BaseMultiqcModule):
 
         for r in self.feelnc_classes_data["lncRNA class"].values():
             if r["isBest"]:
-                subclass = r["type"] + ' ' + r["direction"] + ' ' + r["subtype"] + ' ' + r["location"]
+                subclass = ' '.join([r["type"],r["direction"],r["subtype"],r["location"]])
                 if subclass in subclasses_counts.keys():
                     subclasses_counts[subclass]['count'] += 1
                 else:
-                    subclasses_counts[subclass] = {'direction': r["direction"], 'type': r["type"], 'subtype': r["subtype"], 'location': r["location"], 'count': 0}
+                    subclasses_counts[subclass] = {'direction': r["direction"],
+                                                    'type': r["type"],
+                                                    'subtype': r["subtype"],
+                                                    'location': r["location"],
+                                                    'count': 0}
                 classes_counts[r["type"].title() + " - " + r["location"].title()]+=1
                 if r["direction"]=="sense":
                     classes_counts_sense[r["type"].title() + " - " + r["location"].title()]+=1
@@ -196,7 +179,7 @@ class MultiqcModule(BaseMultiqcModule):
                     classes_counts_antisense[r["type"].title() + " - " + r["location"].title()]+=1
 
         # Rename dict keys for readability
-        new_keys = list(range(len(subclasses_counts.keys())))
-        subclasses_counts_renamed = dict(zip(new_keys,list(subclasses_counts.values())))
+        new_keys = range(len(subclasses_counts.keys()))
+        subclasses_counts_renamed = dict(zip(new_keys,subclasses_counts.values()))
         log.info(classes_counts)
         return([classes_counts,classes_counts_sense,classes_counts_antisense])

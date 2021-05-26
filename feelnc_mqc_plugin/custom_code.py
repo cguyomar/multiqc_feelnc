@@ -35,17 +35,12 @@ def feelnc_mqc_plugin_execution_start():
 
     # config.ignore_images="false"
 
-    if 'feelnc/rf_summary' not in config.sp:
-        config.update_dict( config.sp, { 'feelnc/rf_summary': { 'fn': '*RF_summary.txt' } } )
     if 'feelnc/lnc_classes' not in config.sp:
         config.update_dict( config.sp, { 'feelnc/lnc_classes': { 'fn': '*classes.txt' } } )
     if 'feelnc/roc' not in config.sp:
         config.update_dict( config.sp, { 'feelnc/roc': { 'fn': '*_TGROC.png' } } )
-    if 'feelnc/lnc_classes_log' not in config.sp:
-        config.update_dict( config.sp, { 'feelnc/lnc_classes_log': { 'fn': '*feelncclassifier.log' } } )
     if 'feelnc/classification_summary' not in config.sp:
         config.update_dict( config.sp, { 'feelnc/classification_summary': { 'fn': 'feelnc_classification_summary.txt' } } )
-
     if 'feelnc/filter_log' not in config.sp:
         config.update_dict( config.sp, { 'feelnc/filter_log': { 'fn': '*feelncfilter.log' } } )
     # # Some additional filename cleaning
