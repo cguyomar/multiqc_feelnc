@@ -28,8 +28,31 @@ class MultiqcModule(BaseMultiqcModule):
         self.feelnc_classes_counts_antisense = dict()
         self.feelnc_roc_curves = dict()
         self.feelnc_classification_summary = dict()
+        self.feelnc_filter_counts = dict()
 
         # Parse logs
+
+        # Read filter log for unclassified transcripts
+        for f in self.find_log_files("feelnc/filter_log", filehandles=True):
+            self.feelnc_filter_counts["Transcripts of the novel annotation"] = self.parse_filter_log(f)
+            break
+
+        # Read classification summary file
+        for f in self.find_log_files("feelnc/classification_summary", filehandles=False):
+            self.feelnc_classification_summary["Transcripts of the novel annotation"] = self.parse_asis(f)
+            break
+
+        # Add unclassified transciprts to the summary
+        classification_counts = self.feelnc_classification_summary["Transcripts of the novel annotation"]
+        filter_counts = self.feelnc_filter_counts["Transcripts of the novel annotation"]
+        classification_counts["Not evaluated by FEELnc (overlapping coding transcript in sense)"] = 0
+        classification_counts["Not evaluated by FEELnc (other reason)"] = 0
+
+        if "overlap" in filter_counts.keys():
+            classification_counts["Not evaluated by FEELnc (coding transcripts)"] = filter_counts["overlap"]
+        for val in ["monoexonic","biexonic","Size"]:
+            if val in filter_counts.keys():
+                classification_counts["Not evaluated by FEELnc (other reason)"] += filter_counts[val]
         for f in self.find_log_files("feelnc/roc", filehandles=True):
            self.feelnc_roc_curves[f['s_name']] = self.parse_roc(f)
 
@@ -86,6 +109,17 @@ class MultiqcModule(BaseMultiqcModule):
             anchor = 'feelnc_classification',
             plot = bargraph.plot([self.feelnc_classes_counts_all,self.feelnc_classes_counts_sense,self.feelnc_classes_counts_antisense],[cats,cats,cats],config),
         )
+
+    def parse_filter_log(self,f):
+        counts = dict()
+        for line in f['f']:
+            if line.split(" ")[0] == "Filter":
+                reason = line.split(" ")[1]
+                if reason in counts.keys():
+                    counts[reason] += 1
+                else:
+                    counts[reason] = 1
+        return counts
 
     def parse_asis(self,f):
         parsed_data = {}

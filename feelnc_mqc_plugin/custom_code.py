@@ -46,6 +46,8 @@ def feelnc_mqc_plugin_execution_start():
     if 'feelnc/classification_summary' not in config.sp:
         config.update_dict( config.sp, { 'feelnc/classification_summary': { 'fn': 'feelnc_classification_summary.txt' } } )
 
+    if 'feelnc/filter_log' not in config.sp:
+        config.update_dict( config.sp, { 'feelnc/filter_log': { 'fn': '*feelncfilter.log' } } )
     # # Some additional filename cleaning
     # config.fn_clean_exts.extend([
     #     '.my_tool_extension',
