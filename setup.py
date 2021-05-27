@@ -6,13 +6,13 @@ For more information about Tagada, see https://github.com/FAANG/analysis-TAGADA
 
 from setuptools import setup, find_packages
 
-version = '0.1'
+version = '1.O'
 
 setup(
     name = 'feelnc_mqc_plugin',
     version = version,
-    author = '',
-    author_email = '',
+    author = 'Cervin Guyomar',
+    author_email = 'cervin.guyomar@inrae.fr',
     description = "",
     long_description = __doc__,
     keywords = 'bioinformatics',
