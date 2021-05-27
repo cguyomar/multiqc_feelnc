@@ -49,7 +49,7 @@ class MultiqcModule(BaseMultiqcModule):
             classification_counts["Not evaluated by FEELnc (coding transcripts)"] = filter_counts["overlap"]
         for val in ["monoexonic","biexonic","Size"]:
             if val in filter_counts.keys():
-                classification_counts["Not evaluated by FEELnc (other reason)"] += filter_counts[val]
+                classification_counts["Not evaluated by FEELnc (overlapping coding transcript in sense)"] += filter_counts[val]
 
         # Parse ROC curve
         for f in self.find_log_files("feelnc/roc", filehandles=True):
@@ -57,8 +57,8 @@ class MultiqcModule(BaseMultiqcModule):
 
         # Parse interactions classes
         for f in self.find_log_files("feelnc/lnc_classes", filehandles=True):
-            self.feelnc_classes_data["lncRNA class"]= self.parse_classes(f)
-            self.feelnc_classes_counts_all["lncRNA class"],self.feelnc_classes_counts_sense["lncRNA class"],self.feelnc_classes_counts_antisense[f["s_name"]] = self.count_classes(f)
+            self.feelnc_classes_data["lncRNA-mRNA interaction"]= self.parse_classes(f)
+            self.feelnc_classes_counts_all["lncRNA-mRNA interaction"],self.feelnc_classes_counts_sense["lncRNA-mRNA interaction"],self.feelnc_classes_counts_antisense["lncRNA-mRNA interaction"] = self.count_classes(f)
             break
 
         # Make report
@@ -161,7 +161,7 @@ class MultiqcModule(BaseMultiqcModule):
         classes_counts_antisense = dict(template)
         subclasses_counts = OrderedDict()
 
-        for r in self.feelnc_classes_data["lncRNA class"].values():
+        for r in self.feelnc_classes_data["lncRNA-mRNA interaction"].values():
             if r["isBest"]:
                 subclass = ' '.join([r["type"],r["direction"],r["subtype"],r["location"]])
                 if subclass in subclasses_counts.keys():
