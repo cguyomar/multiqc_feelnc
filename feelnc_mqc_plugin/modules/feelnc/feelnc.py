@@ -37,23 +37,24 @@ class MultiqcModule(BaseMultiqcModule):
         # Read classification summary file
         for f in self.find_log_files("feelnc/classification_summary", filehandles=False):
             self.feelnc_classification_summary["Transcripts of the novel annotation"] = self.parse_asis(f)
+
+            # Add unclassified transcripts to the summary
+            classification_counts = self.feelnc_classification_summary["Transcripts of the novel annotation"]
+            filter_counts = self.feelnc_filter_counts["Transcripts of the novel annotation"]
+            classification_counts["Not evaluated by FEELnc (overlapping coding transcript in sense)"] = 0
+            classification_counts["Not evaluated by FEELnc (other reason)"] = 0
             break
 
-        # Add unclassified transciprts to the summary
-        classification_counts = self.feelnc_classification_summary["Transcripts of the novel annotation"]
-        filter_counts = self.feelnc_filter_counts["Transcripts of the novel annotation"]
-        classification_counts["Not evaluated by FEELnc (overlapping coding transcript in sense)"] = 0
-        classification_counts["Not evaluated by FEELnc (other reason)"] = 0
-
-        if "overlap" in filter_counts.keys():
-            classification_counts["Not evaluated by FEELnc (coding transcripts)"] = filter_counts["overlap"]
-        for val in ["monoexonic","biexonic","Size"]:
-            if val in filter_counts.keys():
-                classification_counts["Not evaluated by FEELnc (overlapping coding transcript in sense)"] += filter_counts[val]
+            if "overlap" in filter_counts.keys():
+                classification_counts["Not evaluated by FEELnc (coding transcripts)"] = filter_counts["overlap"]
+            for val in ["monoexonic","biexonic","Size"]:
+                if val in filter_counts.keys():
+                    classification_counts["Not evaluated by FEELnc (overlapping coding transcript in sense)"] += filter_counts[val]
 
         # Parse ROC curve
         for f in self.find_log_files("feelnc/roc", filehandles=True):
-           self.feelnc_roc_curves[f['s_name']] = self.parse_roc(f)
+           self.feelnc_roc_curves['exons_RF_TGROC'] = self.parse_roc(f)
+           break
 
         # Parse interactions classes
         for f in self.find_log_files("feelnc/lnc_classes", filehandles=True):
@@ -67,12 +68,14 @@ class MultiqcModule(BaseMultiqcModule):
         }
         config_table = {"id": "feelnc_classification", "namespace": "feelnc","sortRows": False,"title": "Classification of transcripts by FEELnc"}
         config = {"id": "feelnc_classification", "namespace": "feelnc","sortRows": False}
-        self.add_section(
-            name = 'Transcript classification',
-            description = "For all potential lnc transcripts (excluding known coding and short transcripts), FEELnc uses a random forest classifier to determine the coding potential of transcripts",
-            anchor = 'feelnc_classification',
-            plot =  bargraph.plot(self.feelnc_classification_summary,pconfig=config_table)
-        )
+
+        if self.feelnc_classification_summary:
+            self.add_section(
+                name = 'Transcript classification',
+                description = "For all potential lnc transcripts (excluding known coding and short transcripts), FEELnc uses a random forest classifier to determine the coding potential of transcripts",
+                anchor = 'feelnc_classification',
+                plot =  bargraph.plot(self.feelnc_classification_summary,pconfig=config_table)
+            )
 
         if 'exons_RF_TGROC' in self.feelnc_roc_curves.keys():
             self.add_section(
@@ -97,16 +100,17 @@ class MultiqcModule(BaseMultiqcModule):
         }
         config = {"data_labels": [{'name': 'All'}, {'name': 'Sense'}, {'name': 'Antisense'}]}
 
-        self.add_section(
-            name = 'LncRNA position with respect to the closest mRNA',
-            description = "The relative position of each lncRNA transcript is \
-            assessed with respect to the closest coding transcript. \
-            Coding transcripts are either transcripts from the reference whose\
-            'transcript biotype' is 'protein_coding' or transcripts evaluated as \
-            'mRNA' by FEELnc",
-            anchor = 'feelnc_classification',
-            plot = bargraph.plot([self.feelnc_classes_counts_all,self.feelnc_classes_counts_sense,self.feelnc_classes_counts_antisense],[cats,cats,cats],config),
-        )
+        if self.feelnc_classes_counts_all:
+            self.add_section(
+                name = 'LncRNA position with respect to the closest mRNA',
+                description = "The relative position of each lncRNA transcript is \
+                assessed with respect to the closest coding transcript. \
+                Coding transcripts are either transcripts from the reference whose\
+                'transcript biotype' is 'protein_coding' or transcripts evaluated as \
+                'mRNA' by FEELnc",
+                anchor = 'feelnc_classification',
+                plot = bargraph.plot([self.feelnc_classes_counts_all,self.feelnc_classes_counts_sense,self.feelnc_classes_counts_antisense],[cats,cats,cats],config),
+            )
 
     def parse_filter_log(self,f):
         counts = dict()
