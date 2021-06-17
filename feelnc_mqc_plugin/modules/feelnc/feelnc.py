@@ -40,15 +40,17 @@ class MultiqcModule(BaseMultiqcModule):
 
             # Add unclassified transcripts to the summary
             classification_counts = self.feelnc_classification_summary["Transcripts of the novel annotation"]
-            filter_counts = self.feelnc_filter_counts["Transcripts of the novel annotation"]
-            classification_counts["Not evaluated by FEELnc (overlapping coding transcript in sense)"] = 0
-            classification_counts["Not evaluated by FEELnc (other reason)"] = 0
 
-            if "overlap" in filter_counts.keys():
-                classification_counts["Not evaluated by FEELnc (coding transcripts)"] = filter_counts["overlap"]
-            for val in ["monoexonic","biexonic","Size"]:
-                if val in filter_counts.keys():
-                    classification_counts["Not evaluated by FEELnc (other reason)"] += filter_counts[val]
+            if  "Transcripts of the novel annotation" in self.feelnc_filter_counts.keys():
+                filter_counts = self.feelnc_filter_counts["Transcripts of the novel annotation"]
+                classification_counts["Not evaluated by FEELnc (overlapping coding transcript in sense)"] = 0
+                classification_counts["Not evaluated by FEELnc (other reason)"] = 0
+
+                if "overlap" in filter_counts.keys():
+                    classification_counts["Not evaluated by FEELnc (coding transcripts)"] = filter_counts["overlap"]
+                for val in ["monoexonic","biexonic","Size"]:
+                    if val in filter_counts.keys():
+                        classification_counts["Not evaluated by FEELnc (other reason)"] += filter_counts[val]
             break
 
         # Parse ROC curve
