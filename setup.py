@@ -6,7 +6,7 @@ For more information about Tagada, see https://github.com/FAANG/analysis-TAGADA
 
 from setuptools import setup, find_packages
 
-version = '1.O'
+version = '1.O.2'
 
 setup(
     name = 'feelnc_mqc_plugin',
